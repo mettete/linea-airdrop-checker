@@ -1,4 +1,3 @@
-
 import { NextRequest } from "next/server";
 import {
   createPublicClient,
@@ -11,15 +10,13 @@ import {
   formatUnits,
 } from "viem";
 
+
 const LINEA_RPC = `https://linea-mainnet.g.alchemy.com/v2/${process.env.INFURA_KEY}` as const;
 const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11" as const;
+const TARGET = "0x87bAa1694381aE3eCaE2660d97fe60404080Eb64" as const; // doğru target
 
-// Linea sitesindeki doğru target
-const TARGET = "0x87bAa1694381aE3eCaE2660d97fe60404080Eb64" as const;
-
-// selectors
 const AGGREGATE3_SELECTOR = "0x82ad56cb" as const; // aggregate3
-const TARGET_SELECTOR = "0x7debb959" as const;     // view(address) -> uint256
+const TARGET_SELECTOR = "0x7debb959" as const;     // view(address)->uint256
 
 const CHUNK_SIZE = 100;
 
@@ -42,7 +39,7 @@ type ApiOut = {
 
 type Aggregate3Tuple = { success: boolean; returnData: `0x${string}` };
 
-function errorMessage(err: unknown): string {
+function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   try { return JSON.stringify(err); } catch { return String(err); }
 }
@@ -60,7 +57,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "addresses is required (array of 0x...)" }, { status: 400 });
     }
 
-    // normalize + duplicate counting
+    // normalize + duplicate count
     const dupCount: Record<string, number> = {};
     const unique: `0x${string}`[] = [];
     for (const r of rawAddrs) {
@@ -117,7 +114,6 @@ export async function POST(req: NextRequest) {
         }],
         result
       );
-
       const tuples = decoded[0] as Aggregate3Tuple[];
 
       tuples.forEach((t, i) => {
@@ -127,7 +123,7 @@ export async function POST(req: NextRequest) {
           const u = decodeAbiParameters([{ type: "uint256" }], t.returnData)[0] as bigint;
           amount = u ?? 0n;
         }
-        total += amount; // yalnızca unique'lerin toplamı
+        total += amount;
         perWallet[addr] = {
           raw: amount.toString(),
           formatted: formatUnits(amount, decimals),
@@ -149,6 +145,6 @@ export async function POST(req: NextRequest) {
 
     return Response.json(payload);
   } catch (err: unknown) {
-    return Response.json({ error: errorMessage(err) }, { status: 500 });
+    return Response.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

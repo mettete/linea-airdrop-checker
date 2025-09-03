@@ -77,10 +77,7 @@ export default function Page() {
       });
 
       const j = (await r.json()) as ApiRes | { error: string };
-
-      if (!r.ok || "error" in j) {
-        throw new Error("error" in j ? j.error : r.statusText);
-      }
+      if (!r.ok || "error" in j) throw new Error("error" in j ? j.error : r.statusText);
 
       setRes(j);
 
@@ -88,7 +85,7 @@ export default function Page() {
       const total = Number(j.total);
       if (total > 0) {
         const mod = await import("canvas-confetti");
-        const confetti = mod.default as ConfettiFn;
+        const confetti = mod.default as unknown as ConfettiFn;
         confetti({ particleCount: 120, spread: 70, origin: { y: 0.7 } });
         setTimeout(() => confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } }), 250);
         setTimeout(() => confetti({ particleCount: 120, spread: 75, origin: { y: 0.55 } }), 500);
